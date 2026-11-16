@@ -45,6 +45,12 @@ def export_entries() -> StreamingResponse:
                              headers={"Content-Disposition": "attachment; filename=transform.csv"})
 
 
+@router.get("/failure-runs")
+def get_failure_runs() -> dict[str, Any]:
+    """同步获取自动化采集失败运行记录（与自动化采集运行页面同一批次）。"""
+    return service.get_failure_runs()
+
+
 @router.get("/{entry_id}")
 def get_entry(entry_id: int) -> dict:
     entry = service.get_entry(entry_id)

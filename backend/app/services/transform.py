@@ -62,3 +62,18 @@ class TransformService:
     def raw_data(self) -> tuple[list[dict], list[dict]]:
         g = self.get_graph()
         return g["nodes"], g["edges"]
+
+    def get_failure_runs(self) -> dict[str, Any]:
+        """同步获取自动化采集的失败运行记录：与运行页面读取同一运行批次。"""
+        flows = {str(row.get("流程编号", "")): row for row in store.rows("robotflow")}
+        runs = {str(run.get("运行批次", "")): run for run in store.aux_rows("robotflow_runs")}
+        items: list[dict[str, Any]] = []
+        for record in store.aux_rows("robotflow_failures"):
+            flow = flows.get(str(record.get("流程编号", "")), {})
+            run = runs.get(str(record.get("运行批次", "")), {})
+            items.append({
+                **record,
+                "批次状态": str(run.get("状态", "")),
+                "最新批次": str(flow.get("运行批次", "") or record.get("运行批次", "")),
+            })
+        return {"items": items, "total": len(items)}

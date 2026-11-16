@@ -35,6 +35,18 @@ class ActionPayload(BaseModel):
     remark: str | None = None
 
 
+class RunPayload(BaseModel):
+    """自动化采集运行请求：同一运行批次只采纳首个采集请求。
+
+    超时步骤用于模拟某一步动作的等待条件超时；等待条件可在重跑时携带修复后的版本。
+    """
+
+    运行批次: str = ""
+    超时步骤: int | None = None
+    等待条件: str | None = None
+    remark: str | None = None
+
+
 
 class DatasourceEntry(BaseModel):
     """数据源明细结构。"""

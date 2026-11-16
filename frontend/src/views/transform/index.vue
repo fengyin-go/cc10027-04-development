@@ -37,6 +37,24 @@
         </div>
       </form>
     </div>
+    <div class="failure-runs" data-testid="failure-runs">
+      <h3 style="font-size:14px;margin:12px 0 6px;">自动化采集失败运行记录</h3>
+      <table class="data-table" v-if="failureRuns.length">
+        <thead><tr><th>记录编号</th><th>流程编号</th><th>运行批次</th><th>失败动作</th><th>超时位置</th><th>未执行动作</th><th>最新批次</th></tr></thead>
+        <tbody>
+          <tr v-for="f in failureRuns" :key="f.记录编号">
+            <td>{{ f.记录编号 }}</td>
+            <td>{{ f.流程编号 }}</td>
+            <td>{{ f.运行批次 }}（{{ f.批次状态 }}）</td>
+            <td>第{{ f.失败步骤 }}步「{{ f.失败动作 }}」</td>
+            <td>{{ f.超时位置 }}</td>
+            <td>{{ (f.未执行动作 || []).join('、') || '无' }}</td>
+            <td>{{ f.最新批次 }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else style="color:var(--muted);font-size:13px;">暂无失败运行记录</p>
+    </div>
     <footer class="page-foot"><span>{{ graph.nodes.length }} 个节点</span></footer>
   </section>
 </template>
@@ -55,6 +73,7 @@ const selectedNode = ref<any>(null)
 const detailFields = computed(() => columns.filter((f: string) => !['id','name','label','status'].includes(f)))
 const svgW = ref(800); const svgH = ref(400)
 const errorMessage = ref('')
+const failureRuns = ref<any[]>([])
 const creating = ref(false); const showCreate = ref(false)
 const createValues = ref<Record<string,string>>({})
 let dragNode: any = null; const dagRef = ref<HTMLElement|null>(null)
@@ -78,5 +97,8 @@ async function submitCreate() {
   try { const res = await request(ENDPOINT, { method: 'POST', body: JSON.stringify({ values: createValues.value }) }); if(!res.ok) throw new Error('创建失败'); showCreate.value = false; await reload() } catch(e: any) { errorMessage.value = e.message }
 }
 async function exportRows() { const r = await fetch(`${ENDPOINT}/export`); const url = URL.createObjectURL(await r.blob()); const a = document.createElement('a'); a.href = url; a.download = 'transform.csv'; a.click(); URL.revokeObjectURL(url) }
-onMounted(reload)
+async function loadFailureRuns() {
+  try { const res = await request(`${ENDPOINT}/failure-runs`); const data = await res.json(); failureRuns.value = data.items || [] } catch(e) { errorMessage.value = '加载失败' }
+}
+onMounted(() => { reload(); loadFailureRuns() })
 </script>
